@@ -32,6 +32,8 @@ import {
   DecimalPlaces,
   Sort,
 } from 'src/types/dashboards'
+import {FluxTable} from 'src/types'
+import {DataTypes} from 'src/shared/constants'
 
 import {manager} from 'src/worker/JobManager'
 
@@ -53,7 +55,8 @@ interface CellRendererProps {
 }
 
 interface Props {
-  data: TimeSeriesServerResponse[]
+  data: TimeSeriesServerResponse[] | FluxTable
+  dataType: DataTypes
   tableOptions: TableOptions
   timeFormat: string
   decimalPlaces: DecimalPlaces
@@ -194,13 +197,17 @@ class TableGraph extends PureComponent<Props, State> {
     const sort: Sort = {field: sortField, direction: DEFAULT_SORT_DIRECTION}
     const {
       data,
-      tableOptions,
+      dataType,
       timeFormat,
+      tableOptions,
       fieldOptions,
       decimalPlaces,
     } = this.props
-    const result = await timeSeriesToTableGraph(data)
-    const sortedLabels = result.sortedLabels
+
+    const {data: resultData, sortedLabels} = await this.getTableGraphData(
+      data,
+      dataType
+    )
     const computedFieldOptions = computeFieldOptions(fieldOptions, sortedLabels)
 
     this.handleUpdateFieldOptions(computedFieldOptions)
@@ -210,7 +217,7 @@ class TableGraph extends PureComponent<Props, State> {
       sortedTimeVals,
       columnWidths,
     } = await manager.tableTransform(
-      result.data,
+      resultData,
       sort,
       computedFieldOptions,
       tableOptions,
@@ -225,7 +232,7 @@ class TableGraph extends PureComponent<Props, State> {
         transformedData,
         sortedTimeVals,
         columnWidths: columnWidths.widths,
-        data: result.data,
+        data: resultData,
         sortedLabels,
         totalColumnWidths: columnWidths.totalWidths,
         hoveredColumnIndex: NULL_ARRAY_INDEX,
@@ -247,7 +254,7 @@ class TableGraph extends PureComponent<Props, State> {
     let result = {}
     const hasDataChanged = this.hasDataChanged(nextProps.data)
     if (hasDataChanged) {
-      result = await timeSeriesToTableGraph(nextProps.data)
+      result = await this.getTableGraphData(nextProps.data, nextProps.dataType)
     }
     const data = _.get(result, 'data', this.state.data)
 
@@ -333,8 +340,11 @@ class TableGraph extends PureComponent<Props, State> {
   }
 
   private hasDataChanged(data): boolean {
-    const newUUID = _.get(data, '0.response.uuid', null)
-    const oldUUID = _.get(this.props.data, '0.response.uuid', null)
+    const newUUID =
+      _.get(data, '0.response.uuid', null) || _.get(data, 'id', null)
+    const oldUUID =
+      _.get(this.props.data, '0.response.uuid', null) ||
+      _.get(this.props.data, 'id', null)
 
     return newUUID !== oldUUID || !!this.props.editorLocation
   }
@@ -636,6 +646,27 @@ class TableGraph extends PureComponent<Props, State> {
         {cellContents}
       </div>
     )
+  }
+
+  private async getTableGraphData(
+    data: TimeSeriesServerResponse[] | FluxTable,
+    dataType: DataTypes
+  ): Promise<{data: TimeSeriesValue[][]; sortedLabels: Label[]}> {
+    if (dataType === DataTypes.influxQL) {
+      const result = await timeSeriesToTableGraph(
+        data as TimeSeriesServerResponse[]
+      )
+      return result
+    } else {
+      const resultData = (data as FluxTable).data
+      const sortedLabels = _.get(resultData, '0', []).map(label => ({
+        label,
+        seriesIndex: 0,
+        responseIndex: 0,
+      }))
+
+      return {data: resultData, sortedLabels}
+    }
   }
 }
 

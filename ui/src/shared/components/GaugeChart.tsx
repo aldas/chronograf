@@ -14,7 +14,7 @@ import {DecimalPlaces} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {FluxTable} from 'src/types/flux'
-import {DataTypes} from 'src/shared/components/RefreshingGraph'
+import {DataTypes} from 'src/shared/constants'
 
 interface Props {
   data: TimeSeriesServerResponse[] | FluxTable[]

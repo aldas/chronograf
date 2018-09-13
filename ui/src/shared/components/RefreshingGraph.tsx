@@ -18,6 +18,7 @@ import {
   DEFAULT_TIME_FORMAT,
   DEFAULT_DECIMAL_PLACES,
 } from 'src/dashboards/constants'
+import {DataTypes} from 'src/shared/constants'
 
 // Utils
 import {AutoRefresher} from 'src/utils/AutoRefresher'
@@ -53,11 +54,6 @@ import {TimeSeriesServerResponse} from 'src/types/series'
 interface TypeAndData {
   dataType: DataTypes
   data: TimeSeriesServerResponse[] | FluxTable[]
-}
-
-export enum DataTypes {
-  flux = 'flux',
-  influxQL = 'influxQL',
 }
 
 interface Props {
@@ -123,8 +119,6 @@ class RefreshingGraph extends PureComponent<Props> {
       inView,
       service,
       queries,
-      visType,
-      rawData = [],
       cellNote,
       onNotify,
       timeRange,
@@ -149,9 +143,9 @@ class RefreshingGraph extends PureComponent<Props> {
       return <MarkdownCell text={cellNote} />
     }
 
-    if (visType === VisType.Table) {
-      return <TimeMachineTables data={rawData} />
-    }
+    // if (visType === VisType.Table) {
+    //   return <TimeMachineTables data={rawData} />
+    // }
 
     return (
       <TimeSeries
@@ -177,7 +171,7 @@ class RefreshingGraph extends PureComponent<Props> {
             case CellType.SingleStat:
               return this.singleStat(timeSeriesInfluxQL, timeSeriesFlux)
             case CellType.Table:
-              return this.table(timeSeriesInfluxQL)
+              return this.table(timeSeriesInfluxQL, timeSeriesFlux)
             case CellType.Gauge:
               return this.gauge(timeSeriesInfluxQL, timeSeriesFlux)
             default:
@@ -233,7 +227,10 @@ class RefreshingGraph extends PureComponent<Props> {
     )
   }
 
-  private table = (data): JSX.Element => {
+  private table = (
+    influxQLData: TimeSeriesServerResponse[],
+    fluxData: FluxTable[]
+  ): JSX.Element => {
     const {
       colors,
       fieldOptions,
@@ -245,9 +242,28 @@ class RefreshingGraph extends PureComponent<Props> {
       editorLocation,
     } = this.props
 
+    const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
+    if (dataType === DataTypes.flux) {
+      return (
+        <TimeMachineTables
+          data={data as FluxTable[]}
+          dataType={dataType}
+          colors={colors}
+          key={manualRefresh}
+          tableOptions={tableOptions}
+          fieldOptions={fieldOptions}
+          timeFormat={timeFormat}
+          decimalPlaces={decimalPlaces}
+          editorLocation={editorLocation}
+          handleSetHoverTime={handleSetHoverTime}
+        />
+      )
+    }
+
     return (
       <TableGraph
         data={data}
+        dataType={dataType}
         colors={colors}
         key={manualRefresh}
         tableOptions={tableOptions}

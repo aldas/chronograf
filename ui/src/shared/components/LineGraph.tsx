@@ -28,7 +28,7 @@ import {
   CellType,
   FluxTable,
 } from 'src/types'
-import {DataTypes} from 'src/shared/components/RefreshingGraph'
+import {DataTypes} from 'src/shared/constants'
 
 interface Props {
   axes: Axes
