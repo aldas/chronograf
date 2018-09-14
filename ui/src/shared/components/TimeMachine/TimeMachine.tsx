@@ -725,6 +725,7 @@ class TimeMachine extends PureComponent<Props, State> {
 
   // --------------- FLUX ----------------
   private get getContext(): Context {
+    const {visualizationOptions} = this.props
     return {
       onAddNode: this.handleAddNode,
       onChangeArg: this.handleChangeArg,
@@ -736,6 +737,7 @@ class TimeMachine extends PureComponent<Props, State> {
       service: this.service,
       data: this.state.data,
       scriptUpToYield: this.handleScriptUpToYield,
+      visualizationOptions,
     }
   }
 

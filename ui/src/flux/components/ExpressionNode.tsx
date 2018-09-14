@@ -57,6 +57,7 @@ class ExpressionNode extends PureComponent<Props, State> {
           service,
           data,
           scriptUpToYield,
+          visualizationOptions,
         }: Context) => {
           let isAfterRange = false
           let isAfterFilter = false
@@ -127,6 +128,7 @@ class ExpressionNode extends PureComponent<Props, State> {
                         bodyID={bodyID}
                         service={service}
                         declarationID={declarationID}
+                        visualizationOptions={visualizationOptions}
                       />
                     </Fragment>
                   )

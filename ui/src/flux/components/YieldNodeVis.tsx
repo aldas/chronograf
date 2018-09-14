@@ -7,10 +7,13 @@ import {Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {FluxTable} from 'src/types'
+import {VisualizationOptions} from 'src/types/dataExplorer'
+import {DataTypes} from 'src/shared/constants'
 
 interface Props {
   data: FluxTable[]
   yieldName: string
+  visualizationOptions: VisualizationOptions
 }
 
 enum VisType {
@@ -66,7 +69,15 @@ class YieldNodeVis extends PureComponent<Props, State> {
 
   private get vis(): JSX.Element {
     const {visType} = this.state
-    const {data} = this.props
+    const {data, visualizationOptions} = this.props
+
+    const {
+      tableOptions,
+      timeFormat,
+      decimalPlaces,
+      fieldOptions,
+      thresholdsListColors,
+    } = visualizationOptions
 
     if (visType === VisType.Line) {
       return (
@@ -76,7 +87,17 @@ class YieldNodeVis extends PureComponent<Props, State> {
       )
     }
 
-    return <TimeMachineTables data={data} />
+    return (
+      <TimeMachineTables
+        data={data}
+        dataType={DataTypes.flux}
+        tableOptions={tableOptions}
+        timeFormat={timeFormat}
+        decimalPlaces={decimalPlaces}
+        fieldOptions={fieldOptions}
+        colors={thresholdsListColors}
+      />
+    )
   }
 
   private selectVisType = (visType: VisType): void => {

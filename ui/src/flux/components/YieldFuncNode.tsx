@@ -8,6 +8,7 @@ import {getDeep} from 'src/utils/wrappers'
 
 import {FluxTable, Service} from 'src/types'
 import {Func} from 'src/types/flux'
+import {VisualizationOptions} from 'src/types/dataExplorer'
 
 interface Props {
   service: Service
@@ -17,6 +18,7 @@ interface Props {
   func: Func
   declarationID?: string
   script: string
+  visualizationOptions: VisualizationOptions
 }
 
 interface State {
@@ -44,7 +46,7 @@ class YieldFuncNode extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {func} = this.props
+    const {func, visualizationOptions} = this.props
     const {data} = this.state
 
     const yieldName = _.get(func, 'args.0.value', 'result')
@@ -52,7 +54,11 @@ class YieldFuncNode extends PureComponent<Props, State> {
     return (
       <div className="yield-node">
         <div className="func-node--connector" />
-        <YieldNodeVis data={data} yieldName={yieldName} />
+        <YieldNodeVis
+          data={data}
+          yieldName={yieldName}
+          visualizationOptions={visualizationOptions}
+        />
       </div>
     )
   }

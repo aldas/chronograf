@@ -1,4 +1,6 @@
 import {Service} from 'src/types'
+import {VisualizationOptions} from 'src/types/dataExplorer'
+
 // function definitions
 export type OnDeleteFuncNode = (ids: DeleteFuncNodeArgs) => void
 export type OnChangeArg = (inputArg: InputArg) => void
@@ -39,6 +41,7 @@ export interface Context {
   service: Service
   data: FluxTable[]
   scriptUpToYield: ScriptUpToYield
+  visualizationOptions: VisualizationOptions
 }
 
 export interface DeleteFuncNodeArgs {
