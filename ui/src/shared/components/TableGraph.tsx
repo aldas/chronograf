@@ -123,7 +123,7 @@ class TableGraph extends PureComponent<Props, State> {
 
     return (
       <div
-        className="table-graph-container"
+        className={this.tableContainerClassName}
         ref={gridContainer => (this.gridContainer = gridContainer)}
         onMouseLeave={this.handleMouseLeave}
       >
@@ -337,6 +337,16 @@ class TableGraph extends PureComponent<Props, State> {
 
       this.setState({shouldResize: false})
     }
+  }
+
+  private get tableContainerClassName(): string {
+    const {dataType} = this.props
+
+    if (dataType === DataTypes.flux) {
+      return 'time-machine-table'
+    }
+
+    return 'table-graph-container'
   }
 
   private hasDataChanged(data): boolean {
