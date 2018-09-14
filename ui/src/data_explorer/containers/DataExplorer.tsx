@@ -29,7 +29,10 @@ import DEHeader from 'src/data_explorer/components/DEHeader'
 // Actions
 import {errorThrown} from 'src/shared/actions/errors'
 import {setAutoRefresh} from 'src/shared/actions/app'
-import {getDashboardsAsync, addDashboardCellAsync} from 'src/dashboards/actions'
+import {
+  getDashboardsAsync,
+  sendDashboardCellAsync,
+} from 'src/dashboards/actions'
 import {writeLineProtocolAsync} from 'src/data_explorer/actions/view/write'
 import {
   loadDE as loadDEAction,
@@ -80,6 +83,7 @@ import {
   TableOptions,
   NoteVisibility,
   QueryType,
+  Cell,
 } from 'src/types/dashboards'
 import {VisualizationOptions} from 'src/types/dataExplorer'
 
@@ -102,7 +106,10 @@ interface Props {
   errorThrownAction: () => void
   writeLineProtocol: () => void
   handleGetDashboards: () => Dashboard[]
-  addDashboardCell: typeof addDashboardCellAsync
+  sendDashboardCell: (
+    dashboard: Dashboard,
+    newCell: Partial<Cell>
+  ) => Promise<{success: boolean; dashboard: Dashboard}>
   updateQueryDrafts: typeof updateQueryDraftsAction
   loadDE: typeof loadDEAction
   addQuery: typeof addQueryAsync
@@ -329,9 +336,10 @@ export class DataExplorer extends PureComponent<Props, State> {
     const {
       source,
       dashboards,
-      addDashboardCell,
+      sendDashboardCell,
       script,
       handleGetDashboards,
+      notify,
     } = this.props
 
     const {isSendToDashboardVisible, isStaticLegend} = this.state
@@ -339,6 +347,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       <Authorized requiredRole={EDITOR_ROLE}>
         <OverlayTechnology visible={isSendToDashboardVisible}>
           <SendToDashboardOverlay
+            notify={notify}
             onCancel={this.toggleSendToDashboard}
             queryConfig={this.activeQueryConfig}
             script={script}
@@ -347,7 +356,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             rawText={this.rawText}
             dashboards={dashboards}
             handleGetDashboards={handleGetDashboards}
-            addDashboardCell={addDashboardCell}
+            sendDashboardCell={sendDashboardCell}
             visualizationOptions={this.visualizationOptions}
             isStaticLegend={isStaticLegend}
           />
@@ -587,7 +596,7 @@ const mdtp = dispatch => {
     writeLineProtocol: bindActionCreators(writeLineProtocolAsync, dispatch),
     queryConfigActions: bindActionCreators(queryConfigModifiers, dispatch),
     handleGetDashboards: bindActionCreators(getDashboardsAsync, dispatch),
-    addDashboardCell: bindActionCreators(addDashboardCellAsync, dispatch),
+    sendDashboardCell: bindActionCreators(sendDashboardCellAsync, dispatch),
     loadDE: bindActionCreators(loadDEAction, dispatch),
     updateQueryDrafts: bindActionCreators(updateQueryDraftsAction, dispatch),
     addQuery: bindActionCreators(addQueryAsync, dispatch),
