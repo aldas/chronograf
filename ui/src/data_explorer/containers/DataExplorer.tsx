@@ -149,13 +149,7 @@ export class DataExplorer extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {
-      loadDE,
-      timeRange,
-      autoRefresh,
-      queryDrafts,
-      handleGetDashboards,
-    } = this.props
+    const {loadDE, timeRange, autoRefresh, queryDrafts} = this.props
     const {query, script} = this.queryString
 
     GlobalAutoRefresher.poll(autoRefresh)
@@ -179,9 +173,6 @@ export class DataExplorer extends PureComponent<Props, State> {
     } else {
       await this.createNewQueryDraft()
     }
-
-    await handleGetDashboards()
-
     this.fetchFluxServices()
   }
 
@@ -335,7 +326,13 @@ export class DataExplorer extends PureComponent<Props, State> {
   }
 
   private get sendToDashboardOverlay(): JSX.Element {
-    const {source, dashboards, addDashboardCell, script} = this.props
+    const {
+      source,
+      dashboards,
+      addDashboardCell,
+      script,
+      handleGetDashboards,
+    } = this.props
 
     const {isSendToDashboardVisible, isStaticLegend} = this.state
     return (
@@ -349,6 +346,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             service={this.service}
             rawText={this.rawText}
             dashboards={dashboards}
+            handleGetDashboards={handleGetDashboards}
             addDashboardCell={addDashboardCell}
             visualizationOptions={this.visualizationOptions}
             isStaticLegend={isStaticLegend}

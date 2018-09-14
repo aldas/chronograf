@@ -53,6 +53,7 @@ interface Props {
   addDashboardCell: typeof addDashboardCellAsync
   visualizationOptions: VisualizationOptions
   isStaticLegend: boolean
+  handleGetDashboards: () => Dashboard[]
 }
 
 interface State {
@@ -70,6 +71,10 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       selectedIDs: [],
       name: '',
     }
+  }
+  public async componentDidMount() {
+    const {handleGetDashboards} = this.props
+    await handleGetDashboards()
   }
 
   public handleChangeName = e => {
