@@ -12,7 +12,10 @@ import {timeSeriesToTableGraph} from 'src/utils/timeSeriesTransformers'
 import {computeFieldOptions} from 'src/dashboards/utils/tableGraph'
 import {updateFieldOptions} from 'src/shared/actions/visualizations'
 import {QueryUpdateState} from 'src/shared/actions/queries'
-import {DEFAULT_TIME_FIELD} from 'src/dashboards/constants'
+import {
+  DEFAULT_INFLUXQL_TIME_FIELD,
+  DEFAULT_FLUX_TIME_FIELD,
+} from 'src/dashboards/constants'
 import {
   ASCENDING,
   DESCENDING,
@@ -64,7 +67,7 @@ interface Props {
   hoverTime: string
   handleUpdateFieldOptions: typeof updateFieldOptions
   handleSetHoverTime: (hovertime: string) => void
-  colors: ColorString
+  colors: ColorString[]
   editorLocation?: QueryUpdateState
 }
 
@@ -92,10 +95,15 @@ class TableGraph extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
+    const defaultTimeField =
+      props.dataType === DataTypes.flux
+        ? DEFAULT_FLUX_TIME_FIELD
+        : DEFAULT_INFLUXQL_TIME_FIELD
+
     const sortField: string = _.get(
       this.props,
       'tableOptions.sortBy.internalName',
-      DEFAULT_TIME_FIELD.internalName
+      defaultTimeField.internalName
     )
     this.state = {
       shouldResize: false,
@@ -180,21 +188,11 @@ class TableGraph extends PureComponent<Props, State> {
 
     return _.find(
       fieldOptions,
-      f => f.internalName === DEFAULT_TIME_FIELD.internalName
+      f => f.internalName === this.defaultTimeField.internalName
     )
   }
 
   public async componentDidMount() {
-    this.isComponentMounted = true
-    window.addEventListener('resize', this.handleResize)
-
-    const sortField: string = _.get(
-      this.props,
-      ['tableOptions', 'sortBy', 'internalName'],
-      DEFAULT_TIME_FIELD.internalName
-    )
-
-    const sort: Sort = {field: sortField, direction: DEFAULT_SORT_DIRECTION}
     const {
       data,
       dataType,
@@ -204,11 +202,34 @@ class TableGraph extends PureComponent<Props, State> {
       decimalPlaces,
     } = this.props
 
+    this.isComponentMounted = true
+    window.addEventListener('resize', this.handleResize)
+
+    let sortField: string = _.get(
+      this.props,
+      ['tableOptions', 'sortBy', 'internalName'],
+      this.defaultTimeField.internalName
+    )
+    const isValidSortField = !!fieldOptions.find(
+      f => f.internalName === sortField
+    )
+
+    if (!isValidSortField) {
+      sortField = this.defaultTimeField.internalName
+    }
+
+    const sort: Sort = {field: sortField, direction: DEFAULT_SORT_DIRECTION}
+
     const {data: resultData, sortedLabels} = await this.getTableGraphData(
       data,
       dataType
     )
-    const computedFieldOptions = computeFieldOptions(fieldOptions, sortedLabels)
+
+    const computedFieldOptions = computeFieldOptions(
+      fieldOptions,
+      sortedLabels,
+      dataType
+    )
 
     this.handleUpdateFieldOptions(computedFieldOptions)
 
@@ -266,21 +287,44 @@ class TableGraph extends PureComponent<Props, State> {
       k => !_.isEqual(this.props[k], nextProps[k])
     )
 
-    const {tableOptions, fieldOptions, timeFormat, decimalPlaces} = nextProps
+    const {
+      tableOptions,
+      fieldOptions,
+      timeFormat,
+      decimalPlaces,
+      dataType,
+    } = nextProps
+
     const sortedLabels = _.get(result, 'sortedLabels', this.state.sortedLabels)
-    const computedFieldOptions = computeFieldOptions(fieldOptions, sortedLabels)
+    const computedFieldOptions = computeFieldOptions(
+      fieldOptions,
+      sortedLabels,
+      dataType
+    )
 
     if (hasDataChanged) {
       this.handleUpdateFieldOptions(computedFieldOptions)
     }
 
-    const internalName = _.get(tableOptions, 'sortBy.internalName', '')
+    let sortField = _.get(tableOptions, 'sortBy.internalName', '')
+
+    const isValidSortField = !!fieldOptions.find(
+      f => f.internalName === sortField
+    )
+
+    if (!isValidSortField) {
+      const defaultTimeField =
+        dataType === DataTypes.flux
+          ? DEFAULT_FLUX_TIME_FIELD
+          : DEFAULT_INFLUXQL_TIME_FIELD
+      sortField = defaultTimeField.internalName
+    }
 
     if (
-      _.get(this.props, 'tableOptions.sortBy.internalName', '') !== internalName
+      _.get(this.props, 'tableOptions.sortBy.internalName', '') !== sortField
     ) {
       sort.direction = DEFAULT_SORT_DIRECTION
-      sort.field = internalName
+      sort.field = sortField
     }
 
     if (
@@ -304,10 +348,12 @@ class TableGraph extends PureComponent<Props, State> {
 
       let isTimeVisible = this.state.isTimeVisible
       if (_.includes(updatedProps, 'fieldOptions')) {
-        const timeField = _.find(
-          nextProps.fieldOptions,
-          f => f.internalName === DEFAULT_TIME_FIELD.internalName
-        )
+        const timeField = _.find(nextProps.fieldOptions, f => {
+          if (dataType === DataTypes.flux) {
+            return f.internalName === DEFAULT_FLUX_TIME_FIELD.internalName
+          }
+          return f.internalName === DEFAULT_INFLUXQL_TIME_FIELD.internalName
+        })
         isTimeVisible = _.get(timeField, 'visible', this.state.isTimeVisible)
       }
 
@@ -552,12 +598,28 @@ class TableGraph extends PureComponent<Props, State> {
     this.forceUpdate()
   }
 
-  private get timeFieldIndex(): number {
-    const {fieldOptions = [DEFAULT_TIME_FIELD]} = this.props
+  private get defaultTimeField(): FieldOption {
+    const {dataType} = this.props
 
-    return fieldOptions.findIndex(
-      ({internalName}) => internalName === DEFAULT_TIME_FIELD.internalName
-    )
+    if (dataType === DataTypes.flux) {
+      return DEFAULT_FLUX_TIME_FIELD
+    }
+
+    return DEFAULT_INFLUXQL_TIME_FIELD
+  }
+
+  private get timeFieldIndex(): number {
+    const {fieldOptions} = this.props
+
+    let hiddenBeforeTime = 0
+    const timeIndex = fieldOptions.findIndex(({internalName, visible}) => {
+      if (!visible) {
+        hiddenBeforeTime += 1
+      }
+      return internalName === this.defaultTimeField.internalName
+    })
+
+    return timeIndex - hiddenBeforeTime
   }
 
   private cellRenderer = ({
@@ -575,7 +637,7 @@ class TableGraph extends PureComponent<Props, State> {
       isTimeVisible,
     } = this.state
 
-    const {fieldOptions = [DEFAULT_TIME_FIELD], colors} = this.props
+    const {fieldOptions = [this.defaultTimeField], colors} = this.props
     const cellData = transformedData[rowIndex][columnIndex]
     const isSorted = sort.field === cellData
     const isAscending = sort.direction === ASCENDING

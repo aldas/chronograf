@@ -9,6 +9,8 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {FluxTable} from 'src/types'
 import {VisualizationOptions} from 'src/types/dataExplorer'
 import {DataTypes} from 'src/shared/constants'
+import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
+import {CellType} from 'src/types/dashboards'
 
 interface Props {
   data: FluxTable[]
@@ -77,6 +79,8 @@ class YieldNodeVis extends PureComponent<Props, State> {
       decimalPlaces,
       fieldOptions,
       thresholdsListColors,
+      gaugeColors,
+      lineColors,
     } = visualizationOptions
 
     if (visType === VisType.Line) {
@@ -87,6 +91,13 @@ class YieldNodeVis extends PureComponent<Props, State> {
       )
     }
 
+    const colors = getCellTypeColors({
+      cellType: CellType.Table,
+      gaugeColors,
+      thresholdsListColors,
+      lineColors,
+    })
+
     return (
       <TimeMachineTables
         data={data}
@@ -95,7 +106,7 @@ class YieldNodeVis extends PureComponent<Props, State> {
         timeFormat={timeFormat}
         decimalPlaces={decimalPlaces}
         fieldOptions={fieldOptions}
-        colors={thresholdsListColors}
+        colors={colors}
       />
     )
   }
