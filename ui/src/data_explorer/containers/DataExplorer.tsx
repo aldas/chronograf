@@ -145,6 +145,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       isWriteFormVisible: false,
       isSendToDashboardVisible: false,
       isStaticLegend: false,
+      isComponentMounted: false,
     }
   }
 
@@ -158,9 +159,11 @@ export class DataExplorer extends PureComponent<Props, State> {
     } = this.props
     const {query, script} = this.queryString
 
-    GlobalAutoRefresher.poll(autoRefresh)
+    await this.fetchFluxServices()
 
-    if (script || _.isEmpty(query)) {
+    if (script) {
+      this.createNewQueryDraft()
+    } else if (_.isEmpty(query)) {
       let drafts = []
       if (!_.isEmpty(queryDrafts)) {
         drafts = queryDrafts
@@ -179,7 +182,9 @@ export class DataExplorer extends PureComponent<Props, State> {
     }
 
     await handleGetDashboards()
-    await this.fetchFluxServices()
+
+    GlobalAutoRefresher.poll(autoRefresh)
+    this.setState({isComponentMounted: true})
   }
 
   public componentDidUpdate(prevProps: Props) {
@@ -213,7 +218,11 @@ export class DataExplorer extends PureComponent<Props, State> {
       notify,
       updateSourceLink,
     } = this.props
-    const {isStaticLegend} = this.state
+    const {isStaticLegend, isComponentMounted} = this.state
+
+    if (!isComponentMounted) {
+      return <h3 className="graph-spinner" />
+    }
 
     return (
       <>
