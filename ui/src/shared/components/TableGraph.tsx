@@ -66,7 +66,7 @@ interface Props {
   fieldOptions: FieldOption[]
   hoverTime: string
   handleUpdateFieldOptions: typeof updateFieldOptions
-  handleSetHoverTime: (hovertime: string) => void
+  handleSetHoverTime?: (hovertime: string) => void
   colors: ColorString[]
   editorLocation?: QueryUpdateState
 }

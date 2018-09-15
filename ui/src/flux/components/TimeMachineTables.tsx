@@ -20,7 +20,7 @@ interface Props {
   timeFormat: string
   decimalPlaces: DecimalPlaces
   fieldOptions: FieldOption[]
-  handleSetHoverTime: (hovertime: string) => void
+  handleSetHoverTime?: (hovertime: string) => void
   colors: ColorString[]
   editorLocation?: QueryUpdateState
 }

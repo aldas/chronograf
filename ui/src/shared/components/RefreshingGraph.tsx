@@ -17,6 +17,7 @@ import {emptyGraphCopy} from 'src/shared/copy/cell'
 import {
   DEFAULT_TIME_FORMAT,
   DEFAULT_DECIMAL_PLACES,
+  DEFAULT_TABLE_OPTIONS,
 } from 'src/dashboards/constants'
 import {DataTypes} from 'src/shared/constants'
 
@@ -117,12 +118,16 @@ class RefreshingGraph extends PureComponent<Props> {
       type,
       source,
       inView,
+      colors,
+      visType,
+      rawData,
       service,
       queries,
       cellNote,
       onNotify,
       timeRange,
       templates,
+      fieldOptions,
       grabFluxData,
       manualRefresh,
       autoRefresher,
@@ -143,9 +148,22 @@ class RefreshingGraph extends PureComponent<Props> {
       return <MarkdownCell text={cellNote} />
     }
 
-    // if (visType === VisType.Table) {
-    //   return <TimeMachineTables data={rawData} />
-    // }
+    const defaultFieldOptions = fieldOptions.map(f => {
+      return {...f, displayName: '', visible: true}
+    })
+    if (visType === VisType.Table) {
+      return (
+        <TimeMachineTables
+          data={rawData}
+          dataType={DataTypes.flux}
+          tableOptions={DEFAULT_TABLE_OPTIONS}
+          timeFormat={DEFAULT_TIME_FORMAT}
+          decimalPlaces={DEFAULT_DECIMAL_PLACES}
+          fieldOptions={defaultFieldOptions}
+          colors={colors}
+        />
+      )
+    }
 
     return (
       <TimeSeries
