@@ -652,7 +652,7 @@ class TableGraph extends PureComponent<Props, State> {
         : rowIndex === this.timeFieldIndex && isFirstCol)
     const isFieldName = this.isVerticalTimeAxis ? isFirstRow : isFirstCol
     const isFixedCorner = isFirstRow && isFirstCol
-    const isNumerical = _.isNumber(cellData)
+    const isNumerical = !isNaN(Number.parseFloat(cellData as string))
 
     let cellStyle: React.CSSProperties = style //tslint:disable-line
     if (
